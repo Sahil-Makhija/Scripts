@@ -20,9 +20,15 @@ unique_ports() {
 function ping_machine {
     if ping -c 1 -W 1 "$ip" &>/dev/null; then  # Set a timeout of 1 second for faster failure detection.
         reachable=true
+        echo -e "[+] Target machine is reachable."
     else
         reachable=false
     fi
+}
+
+function choose_scan_type {
+    echo -e "[*] Choose a Scan Type :\n\t[1] Init Scan (Top 1000 ports)\n\t[2] TCP Scan (Deep Scan for all TCP ports) [Default]\n\t[3] UDP Scan (Deep Scan for UDP ports)\n\t[4] Both TCP + UDP Scan"
+    read -p "Select : " scan_type
 }
 
 # Function to prepare the directory for storing Nmap scan results.
@@ -69,17 +75,35 @@ function udp_scan {
     fi
 }
 
-# Prompt the user for the target machine's IP address.
-read -p "Enter Machine IP: " ip
+if [[ $# -eq 0 ]]
+then
+    # Prompt the user for the target machine's IP address.
+    read -p "Enter Machine IP: " ip
+else
+    ip=$1
+fi
+
 reachable=false
+scan_type=2 # Default scan type
 ping_machine  # Check if the target is reachable.
 
 if [[ "$reachable" == true ]]; then
-    echo "Target machine is reachable. Proceeding with scans..."
     prepare_scans  # Ensure the results directory is ready.
-    init_scan  # Perform an initial scan.
-    tcp_scan  # Perform a TCP scan.
-    udp_scan  # Perform a UDP scan.
+    if [[ $# -eq 0 ]]
+    then
+        choose_scan_type
+    else
+        if [[ $2 ]];then
+        scan_type=$2
+        fi
+    fi
+    case $scan_type in 
+        "1") init_scan ;; 
+        "2") tcp_scan ;;
+        "3") udp_scan ;;
+        "4") tcp_scan ; udp_scan ;;
+        "*") echo -e "[-] Invalid scan type selected"; exit 1 ;; 
+    esac
 else
     echo "Machine not reachable! Please check your VPN or network settings."
     exit 1
@@ -87,6 +111,7 @@ fi
 
 # Cleanup: Unset variables to free memory.
 unset ip
+unset scan_type
 unset init_ports
 unset reachable
 exit 0
