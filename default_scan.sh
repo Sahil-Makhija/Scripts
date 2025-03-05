@@ -93,7 +93,8 @@ if [[ "$reachable" == true ]]; then
     then
         choose_scan_type
     else
-        if [[ $2 ]];then
+    # If scan type given, use that else default (2)
+        if [[ $2 ]];then 
         scan_type=$2
         fi
     fi
