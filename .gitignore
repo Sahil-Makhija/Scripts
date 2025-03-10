@@ -1,2 +1,3 @@
 nmap
 test.sh
+*/*/__pycache__
